@@ -70,7 +70,7 @@ namespace RESTApi.Controllers
                 Id = 0,
                 Title = viewModel.Title,
                 Information = viewModel.Information ?? string.Empty,
-                ImageUrl = $"{Request.Scheme}://{Request.Host}/media/{fileName}",
+                ImageUrl = $"/media/{fileName}",
                 Description = viewModel.Description,
                 TeamId = viewModel.TeamId
             };

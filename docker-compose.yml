@@ -4,6 +4,8 @@ services:
   vue_project:
     container_name: client
     build: Web-Module-4
+    depends_on:
+      - asp_project
     logging: 
       options:
         max-size: "200M"
@@ -17,6 +19,7 @@ services:
     image: mysql:latest
     ports:
       - "3306:3306"
+    restart: always
     environment:
       - MYSQL_ROOT_PASSWORD=1453
       - MYSQL_USER=imysko
