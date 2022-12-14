@@ -14,7 +14,7 @@ builder.Services.AddDbContext<F1DataBaseContext>(
     options =>
     {
         options.UseMySql(builder.Configuration.GetConnectionString("F1DataBase"),
-            ServerVersion.Parse("8.0.31-0ubuntu0.22.04.1"));
+			new MySqlServerVersion(new Version(8, 0, 31)));
     });
 
 builder.Services.AddControllers().AddNewtonsoftJson(options =>

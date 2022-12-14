@@ -60,10 +60,11 @@ namespace RESTApi.Controllers
             
             var fileName = DateTime.Now.Ticks + ".png";
             var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "Media", fileName);
+	    
             
             await using var fileSteam = new FileStream(filePath, FileMode.Create);
             await viewModel.Image.CopyToAsync(fileSteam);
-            
+
             var newObject = new Car
             {
                 Id = 0,

@@ -2,6 +2,7 @@ version: "3"
 
 services:
   vue_project:
+    container_name: client
     build: Web-Module-4
     logging: 
       options:
@@ -10,16 +11,9 @@ services:
     restart: always
     ports:
       - "5173:80"
-  asp_project:
-    build: RESTApi
-    logging:
-      options:
-        max-size: "200M"
-        max-file: "4"
-    restart: always
-    ports:
-      - "7227:80"
+
   mysql:
+    container_name: mysql
     image: mysql:latest
     ports:
       - "3306:3306"
@@ -32,3 +26,18 @@ services:
       - MYSQL_PORT=3306
     volumes:
       - ./.mysql-data/db:/var/lib/mysql
+
+  asp_project:
+    container_name: rest-server
+    build: RESTApi
+    depends_on:
+      - mysql
+    logging:
+      options:
+        max-size: "200M"
+        max-file: "4"
+    restart: always
+    volumes:
+      - ./wwwroot/Media:/app/wwwroot/Media
+    ports:
+      - "7227:80"
