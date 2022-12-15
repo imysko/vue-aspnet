@@ -41,6 +41,6 @@ services:
         max-file: "4"
     restart: always
     volumes:
-      - ./wwwroot/Media:/app/wwwroot/Media
+      - ./RESTApi/wwwroot/media:/app/wwwroot/media
     ports:
       - "7227:80"

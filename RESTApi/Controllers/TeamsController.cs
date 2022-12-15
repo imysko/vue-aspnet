@@ -47,7 +47,7 @@ namespace RESTApi.Controllers
 
             var roles = await GetRolesByUser();
             
-            if (!(roles.Contains(Roles.Editor.ToString()) || roles.Contains(Roles.Superuser.ToString())))
+            if (!(roles.Contains(Roles.User.ToString()) || roles.Contains(Roles.Superuser.ToString())))
             {
                 return new JsonResult(new BaseResponse(false, "Доступ запрещён"));
             }

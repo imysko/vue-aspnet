@@ -50,7 +50,7 @@ namespace RESTApi.Controllers
 
             var roles = await GetRolesByUser();
             
-            if (!(roles.Contains(Roles.Editor.ToString()) || roles.Contains(Roles.Superuser.ToString())))
+            if (!(roles.Contains(Roles.User.ToString()) || roles.Contains(Roles.Superuser.ToString())))
             {
                 return new JsonResult(new BaseResponse(false, "Доступ запрещён"));
             }
@@ -59,7 +59,7 @@ namespace RESTApi.Controllers
                 return new JsonResult(new BaseResponse(false, "Не удалось загрузить изображение"));
             
             var fileName = DateTime.Now.Ticks + ".png";
-            var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "Media", fileName);
+            var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "media", fileName);
 	    
             
             await using var fileSteam = new FileStream(filePath, FileMode.Create);
