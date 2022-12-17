@@ -55,7 +55,7 @@ public class AuthenticationController : ControllerBase
         
         await _context.SaveChangesAsync();
 
-        return StatusCode(401, "User was registered");
+        return StatusCode(201, "User was registered");
     }
 
     [ProducesResponseType(StatusCodes.Status200OK)]

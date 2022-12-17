@@ -76,7 +76,7 @@ namespace RESTApi.Controllers
             _context.Cars.Add(newObject);
             await _context.SaveChangesAsync();
 
-            return StatusCode(401, "Car was created");
+            return StatusCode(201, "Car was created");
         }
 
         [ProducesResponseType(StatusCodes.Status200OK)]

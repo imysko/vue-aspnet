@@ -54,7 +54,7 @@ namespace RESTApi.Controllers
             _context.Teams.Add(team);
             await _context.SaveChangesAsync();
 
-            return StatusCode(401, "Team was created");
+            return StatusCode(201, "Team was created");
         }
 
         [ProducesResponseType(StatusCodes.Status200OK)]
