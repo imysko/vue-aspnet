@@ -1,45 +1,102 @@
-import {onBeforeMount, ref} from "vue"
+import {onBeforeMount, reactive, ref} from "vue"
 import {defineStore} from "pinia"
 import axios from "axios"
 import _ from "lodash"
 
 const useAuthenticationStore = defineStore("authenticationStore", () => {
-    const permissions = ref([])
+    const user = reactive({
+        username: String,
+        roles: []
+    })
     const checkAuth = ref(false)
 
     onBeforeMount(async () => {
         await checkAuthentication()
-        await getRoles()
+        if (checkAuth.value) {
+            await getUser()
+        }
     })
 
     async function registration(user) {
-        let request = await axios.post('api/authentication/register', user)
-
-        return {
-            result: request.data.result,
-            message: request.data.message
+        try {
+            let response = await axios.post('api/authentication/register', user)
+            return {
+                status_code: response.status,
+                message: response.data.message
+            }
+        }
+        catch (e) {
+            return {
+                status_code: e.response.status,
+                message: e.response.data
+            }
         }
     }
 
     async function login(user) {
-        let request = await axios.post('api/authentication/login', user)
-        await checkAuthentication()
-        await getRoles()
+        try {
+            let response = await axios.post('api/authentication/login', user)
+            await getUser()
 
-        return {
-            result: request.data.result,
-            message: request.data.message
+            return {
+                status_code: response.status,
+                message: response.data.message
+            }
+        }
+        catch (e) {
+            return {
+                status_code: e.response.status,
+                message: e.response.data
+            }
         }
     }
 
     async function logout() {
-        let request = await axios.post('api/authentication/logout')
-        await checkAuthentication()
-        await getRoles()
+        try {
+            let response = await axios.post('api/authentication/logout')
+            await getUser()
 
-        return {
-            result: request.data.result,
-            message: request.data.message
+            return {
+                status_code: response.status,
+                message: response.data.message
+            }
+        }
+        catch (e) {
+            return {
+                status_code: e.response.status,
+                message: e.response.data
+            }
+        }
+    }
+
+    async function getUser() {
+        await checkAuthentication()
+
+        if (checkAuth.value) {
+            try {
+                let response = (await axios.get('api/authentication/me'))
+
+                user.username = response.data.username
+                user.roles = response.data.roles
+
+                return {
+                    status_code: response.status,
+                    message: response.data.message
+                }
+            }
+            catch (e) {
+                user.username = undefined
+                user.roles = []
+
+                return {
+                    status_code: e.response.status,
+                    message: e.response.data
+                }
+            }
+        }
+        else {
+            user.username = undefined
+            user.roles = []
         }
     }
 
@@ -47,12 +104,8 @@ const useAuthenticationStore = defineStore("authenticationStore", () => {
         checkAuth.value = (await axios.get('api/authentication/check_authentication')).data
     }
 
-    async function getRoles() {
-        permissions.value = (await axios.get('api/user/roles')).data
-    }
-
     function canAction(action) {
-        return _.includes(permissions.value, action) || _.includes(permissions.value, 'Superuser')
+        return _.includes(user.roles, action) || _.includes(user.roles, 'superuser')
     }
 
     return {

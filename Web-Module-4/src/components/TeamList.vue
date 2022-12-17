@@ -81,7 +81,7 @@ function editCar(car) {
   <div v-for="team in filteredTeams">
     <div class="d-flex mt-4 ms-4 align-items-center">
       <h2>{{ team.title }}</h2>
-      <b-button v-if="authStore.canAction('User')" class="fas fa-plus m-2 p-2" variant="outline-primary" @click="onCreateClick(team.id)"/>
+      <b-button v-if="authStore.canAction('user')" class="fas fa-plus m-2 p-2" variant="outline-primary" @click="onCreateClick(team.id)"/>
     </div>
 
     <CarList @delete-car-click="onDeleteClick" @edit-car-click="onEditClick" :cars="props.cars[team.id]"

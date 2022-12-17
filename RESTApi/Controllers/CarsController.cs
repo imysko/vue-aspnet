@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RESTApi.DataBase.Data;
@@ -8,16 +9,20 @@ namespace RESTApi.Controllers
     [Route("api/cars")]
     [ApiController]
     [Produces("application/json")]
-    public class CarsController : BaseController
+    [Authorize]
+    public class CarsController : ControllerBase
     {
+        private readonly F1DataBaseContext _context;
         private static IWebHostEnvironment? _webHostEnvironment;
-        
-        public CarsController(F1DataBaseContext context, IWebHostEnvironment webHostEnvironment) : base(context)
+
+        public CarsController(F1DataBaseContext context, IWebHostEnvironment webHostEnvironment)
         {
+            _context = context;
             _webHostEnvironment = webHostEnvironment;
         }
         
-        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [HttpGet, AllowAnonymous]
         public async Task<ActionResult<IEnumerable<Car>>> GetCars(int? teamId)
         {
             return teamId switch
@@ -32,7 +37,9 @@ namespace RESTApi.Controllers
             };
         }
         
-        [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [HttpGet("{id}"), AllowAnonymous]
         public async Task<ActionResult<Car>> GetCar(int id)
         {
             var car = await _context.Cars.FindAsync(id);
@@ -40,28 +47,19 @@ namespace RESTApi.Controllers
             return car == null ? NotFound() : car;
         }
 
-        [HttpPost]
-        public async Task<JsonResult> PostCar([FromForm] CarViewModel viewModel)
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status415UnsupportedMediaType)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [HttpPost, Authorize(Roles = "user, editor, superuser")]
+        public async Task<IActionResult> PostCar([FromForm] CarViewModel viewModel)
         {
-            if (!CheckSession())
-            {
-                return new JsonResult(new BaseResponse(false, "Доступ запрещён"));
-            }
-
-            var roles = await GetRolesByUser();
-            
-            if (!(roles.Contains(Roles.User.ToString()) || roles.Contains(Roles.Superuser.ToString())))
-            {
-                return new JsonResult(new BaseResponse(false, "Доступ запрещён"));
-            }
-            
-            if (_webHostEnvironment == null) 
-                return new JsonResult(new BaseResponse(false, "Не удалось загрузить изображение"));
+            if (_webHostEnvironment == null)
+                return StatusCode(415, "Failed to load media file");
             
             var fileName = DateTime.Now.Ticks + ".png";
             var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "media", fileName);
-	    
-            
+
             await using var fileSteam = new FileStream(filePath, FileMode.Create);
             await viewModel.Image.CopyToAsync(fileSteam);
 
@@ -78,30 +76,22 @@ namespace RESTApi.Controllers
             _context.Cars.Add(newObject);
             await _context.SaveChangesAsync();
 
-            return new JsonResult(new BaseResponse(true, "Болид добавлен"));
+            return StatusCode(401, "Car was created");
         }
 
-        [HttpPut("{id}")]
-        public async Task<JsonResult> PutCar(int id, Car car)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [HttpPut("{id}"), Authorize(Roles = "editor, superuser")]
+        public async Task<IActionResult> PutCar(int id, Car car)
         {
-            if (!CheckSession())
-            {
-                return new JsonResult(new BaseResponse(false, "Доступ запрещён"));
-            }
-
-            var roles = await GetRolesByUser();
-            
-            if (!(roles.Contains(Roles.Editor.ToString()) || roles.Contains(Roles.Superuser.ToString())))
-            {
-                return new JsonResult(new BaseResponse(false, "Доступ запрещён"));
-            }
-            
             if (id != car.Id)
             {
-                return new JsonResult(new BaseResponse(false, "Болид не найден"));
+                return BadRequest();
             }
             
-
             _context.Entry(car).State = EntityState.Modified;
 
             try
@@ -112,42 +102,32 @@ namespace RESTApi.Controllers
             {
                 if (!CarExists(id))
                 {
-                    return new JsonResult(new BaseResponse(false, "Болид не найден"));
+                    return NotFound();
                 }
-                else
-                {
-                    throw;
-                }
+
+                throw;
             }
 
-            return new JsonResult(new BaseResponse(true, "Болид изменён"));
+            return Ok("Car was changed");
         }
 
-        [HttpDelete("{id}")]
-        public async Task<JsonResult> DeleteCar(int id)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [HttpDelete("{id}"), Authorize(Roles = "editor, superuser")]
+        public async Task<IActionResult> DeleteCar(int id)
         {
-            if (!CheckSession())
-            {
-                return new JsonResult(new BaseResponse(false, "Доступ запрещён"));
-            }
-
-            var roles = await GetRolesByUser();
-            
-            if (!(roles.Contains(Roles.Editor.ToString()) || roles.Contains(Roles.Superuser.ToString())))
-            {
-                return new JsonResult(new BaseResponse(false, "Доступ запрещён"));
-            }
-            
             var car = await _context.Cars.FindAsync(id);
             if (car == null)
             {
-                return new JsonResult(new BaseResponse(false, "Болид не найден"));
+                return NotFound();
             }
 
             _context.Cars.Remove(car);
             await _context.SaveChangesAsync();
 
-            return new JsonResult(new BaseResponse(true, "Болид удалён"));
+            return Ok("Car was deleted");
         }
 
         private bool CarExists(int id)

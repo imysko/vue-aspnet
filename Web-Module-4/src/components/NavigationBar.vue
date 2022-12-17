@@ -99,7 +99,7 @@ async function onLogout() {
           <b-nav-item to="/search" right>
             <b-button variant="outline-danger" :active="type === 'search'">Поиск</b-button>
           </b-nav-item>
-          <b-nav-item v-if="authStore.canAction('User')" right>
+          <b-nav-item v-if="authStore.canAction('user')" right>
             <b-button variant="outline-danger" @click="onCreateClick">Добавить команду</b-button>
           </b-nav-item>
         </b-navbar-nav>

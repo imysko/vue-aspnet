@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RESTApi.DataBase.Data;
@@ -8,13 +9,18 @@ namespace RESTApi.Controllers
     [Route("api/teams")]
     [ApiController]
     [Produces("application/json")]
-    public class TeamsController : BaseController
+    [Authorize]
+    public class TeamsController : ControllerBase
     {
-        public TeamsController(F1DataBaseContext context) : base(context)
+        private readonly F1DataBaseContext _context;
+        
+        public TeamsController(F1DataBaseContext context)
         {
+            _context = context;
         }
 
-        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [HttpGet, AllowAnonymous]
         public async Task<ActionResult<IEnumerable<Team>>> GetTeams(int? teamId)
         {
             return teamId switch
@@ -29,6 +35,8 @@ namespace RESTApi.Controllers
             };
         }
         
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [HttpGet("{id}")]
         public async Task<ActionResult<Team>> GetTeam(int id)
         {
@@ -37,45 +45,29 @@ namespace RESTApi.Controllers
             return team == null ? NotFound() : team;
         }
 
-        [HttpPost]
-        public async Task<JsonResult> PostTeam(Team team)
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [HttpPost, Authorize(Roles = "user, editor, superuser")]
+        public async Task<IActionResult> PostTeam(Team team)
         {
-            if (!CheckSession())
-            {
-                return new JsonResult(new BaseResponse(false, "Доступ запрещён"));
-            }
-
-            var roles = await GetRolesByUser();
-            
-            if (!(roles.Contains(Roles.User.ToString()) || roles.Contains(Roles.Superuser.ToString())))
-            {
-                return new JsonResult(new BaseResponse(false, "Доступ запрещён"));
-            }
-            
             _context.Teams.Add(team);
             await _context.SaveChangesAsync();
 
-            return new JsonResult(new BaseResponse(true, "Команда добавлена"));
+            return StatusCode(401, "Team was created");
         }
 
-        [HttpPut("{id}")]
-        public async Task<JsonResult> PutTeam(int id, Team team)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [HttpPut("{id}"), Authorize(Roles = "editor, superuser")]
+        public async Task<IActionResult> PutTeam(int id, Team team)
         {
-            if (!CheckSession())
-            {
-                return new JsonResult(new BaseResponse(false, "Доступ запрещён"));
-            }
-
-            var roles = await GetRolesByUser();
-            
-            if (!(roles.Contains(Roles.Editor.ToString()) || roles.Contains(Roles.Superuser.ToString())))
-            {
-                return new JsonResult(new BaseResponse(false, "Доступ запрещён"));
-            }
-            
             if (id != team.Id)
             {
-                return new JsonResult(new BaseResponse(false, "Команда не найдена"));
+                return BadRequest();
             }
 
             _context.Entry(team).State = EntityState.Modified;
@@ -88,42 +80,32 @@ namespace RESTApi.Controllers
             {
                 if (!TeamExists(id))
                 {
-                    return new JsonResult(new BaseResponse(false, "Команда не найдена"));
+                    return NotFound();
                 }
-                else
-                {
-                    throw;
-                }
+
+                throw;
             }
 
-            return new JsonResult(new BaseResponse(true, "Команда изменена"));
+            return Ok("Team was changed");
         }
 
-        [HttpDelete("{id}")]
-        public async Task<JsonResult> DeleteTeam(int id)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [HttpDelete("{id}"), Authorize(Roles = "editor, superuser")]
+        public async Task<IActionResult> DeleteTeam(int id)
         {
-            if (!CheckSession())
-            {
-                return new JsonResult(new BaseResponse(false, "Доступ запрещён"));
-            }
-
-            var roles = await GetRolesByUser();
-            
-            if (!(roles.Contains(Roles.Editor.ToString()) || roles.Contains(Roles.Superuser.ToString())))
-            {
-                return new JsonResult(new BaseResponse(false, "Доступ запрещён"));
-            }
-            
             var team = await _context.Teams.FindAsync(id);
             if (team == null)
             {
-                return new JsonResult(new BaseResponse(false, "Команда не найдена"));
+                return NotFound();
             }
 
             _context.Teams.Remove(team);
             await _context.SaveChangesAsync();
 
-            return new JsonResult(new BaseResponse(true, "Команда удалена"));
+            return Ok("Team was deleted");
         }
 
         private bool TeamExists(int id)

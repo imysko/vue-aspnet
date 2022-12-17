@@ -47,7 +47,7 @@ function onEditClick(car) {
           <b-button :to="`car/${props.car.id}#image`" variant="outline-danger">Картинка</b-button>
           <b-button :to="`car/${props.car.id}#information`" variant="outline-danger">Описание</b-button>
         </div>
-        <div v-if="authStore.canAction('Editor')" class="d-flex justify-content-end">
+        <div v-if="authStore.canAction('editor')" class="d-flex justify-content-end">
           <b-button class="fas fa-pen me-2" variant="outline-primary" @click="onEditClick({...props.car})"/>
           <b-button class="fas fa-trash" variant="outline-danger" @click="onDeleteClick(props.car)"/>
         </div>

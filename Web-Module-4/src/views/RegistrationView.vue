@@ -35,12 +35,11 @@ async function onRegistration() {
 
   let request = await registration(user)
 
-  if (request.result) {
+  if (request.status_code === 201) {
     await login(user)
     await router.push("/")
   }
-
-  if (request.message === 'username-exist') {
+  else if (request.status_code === 409) {
     showAlert.usernameExist = true
   }
 }

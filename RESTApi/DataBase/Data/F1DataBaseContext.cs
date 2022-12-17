@@ -19,7 +19,6 @@ namespace RESTApi.DataBase.Data
         public virtual DbSet<User> Users { get; set; } = null!;
         public virtual DbSet<Role> Roles { get; set; } = null!;
         public virtual DbSet<UserRole> UsersRoles { get; set; } = null!;
-        public virtual DbSet<Session> Sessions { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -73,17 +72,6 @@ namespace RESTApi.DataBase.Data
                     .WithMany(e => e.UsersRoles)
                     .HasForeignKey(e => e.RoleId)
                     .HasConstraintName("role_id");
-            });
-            
-            modelBuilder.Entity<Session>(entity =>
-            {
-                entity.Property(e => e.Id)
-                    .HasColumnType("int(11)")
-                    .HasColumnName("id");
-                
-                entity.Property(e => e.UserId)
-                    .HasColumnType("int(11)")
-                    .HasColumnName("user_id");
             });
 
             modelBuilder.Entity<Car>(entity =>
